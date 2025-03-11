@@ -1,0 +1,517 @@
+---
+title: "Dendrometer processing in R"
+bibliography: references.bib
+---
+
+## How do dendrometer data look like?
+
+Let's see and have a look at the demo data...
+
+```{r}
+#| warning: false
+library(readr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+dendro <- read_csv("./Data/Demo_Dendrometer_GH.csv", 
+                   col_select = -1)
+dendro$TIMESTAMP <- as.POSIXct(dendro$TIMESTAMP, 
+                               format="%Y-%m-%d %H:%M:%S")
+
+head(dendro)
+```
+
+... and visualize them
+
+```{r}
+dendro_long <- pivot_longer(dendro, 
+                            cols = 2:ncol(dendro),
+                            values_to = "TSD",
+                            names_to = "Tree.ID")
+
+dendro_long$Treatment <- sub(".*(W|D).*", "\\1", dendro_long$Tree.ID)
+
+ggplot(dendro_long) +
+  geom_line(aes(x = TIMESTAMP, y = TSD, color = Tree.ID)) +
+  facet_grid(Treatment ~ .) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  theme_bw()
+
+```
+
+**Common issues in dendrometer data:**
+
+-   Gaps
+-   Jumps (e.g. due to manual readjustment of the dendrometer)
+-   Outliers
+
+**Several R-Packages exist for preprocessing dendrometer data and deriving tree based metrics about growth or water status:**
+
+-   **DendRoAnalyst**[@aryal2020]
+
+-   Treenetproc[@knüsel2021]
+
+-   dendrometeR[@vandermaaten2016]
+
+## Dendrometer processing with dendRoAnalyst
+
+![](./Figures/Overview_dendRoAnalyst.png)
+
+Additional new functions, e. g.:
+
+-   detrending (dm.detrend, mean.detrended.dm)
+-   calculating climate-growth relationships (mov.cor.dm)
+
+```{r}
+#| warning: false
+library(dendRoAnalyst)
+```
+
+Let's inspect one dendrometer closer
+
+```{r}
+dendro_D4W <- dendro %>%
+  select(TIMESTAMP, D4_W)
+
+ggplot() +
+  geom_line(data = dendro_D4W,
+             aes(x = TIMESTAMP, y = D4_W)) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  theme_bw()
+
+```
+
+### How can we get rid of this jump?
+
+-\> use function **jump.locator**
+
+```{r}
+dendro_D4W_j <- jump.locator(dendro_D4W, v = 100)
+
+ggplot() +
+  geom_line(data = dendro_D4W_j,
+             aes(x = TIME, y = D4_W), color = "red") +
+  geom_line(data = dendro_D4W,
+             aes(x = TIMESTAMP, y = D4_W)) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  theme_bw()
+```
+
+Repeat for all dendrometers
+
+```{r}
+
+dendro_j <- jump.locator(dendro, v = 100)
+dendro_j_long <- pivot_longer(dendro_j, 
+                            cols = 2:ncol(dendro_j),
+                            values_to = "TSD",
+                            names_to = "Tree.ID")
+
+dendro_j_long$Treatment <- sub(".*(W|D).*", "\\1", dendro_j_long$Tree.ID)
+
+ggplot(dendro_j_long) +
+  geom_line(aes(x = TIME, y = TSD, color = Tree.ID)) +
+  facet_grid(Treatment ~ .) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  theme_bw()
+
+
+
+```
+
+### Let's **fill the gaps**...
+
+Several options are available in dendRoAnalyst:
+
+1.   dm.na.interpolation (= former spline.interpolation):
+
+    Uncertainty increases with length of data gap - recommended for gaps of max. 24h
+
+```         
+-   cubic spline: 
+    Gapfilling via cubic spline interpolation
+    
+-   seasonal:
+    An ARIMA model is used to detect the daily pattern for 3 weeks 
+    (week of gap + 1 week earlier and later) and interpolates missing data
+```
+
+2.  network interpolation:
+
+    Includes stem diameter variations from other dendrometers (= reference dataframe) for gapfilling
+
+```         
+-   niMethod = "linear"
+    Missing value is calculated by linear model between previous data points of
+    reference dataframe and dendrometer with missing values 
+
+-   niMethod = "proportional"
+    Average proportional change between previous datapoints in reference 
+    dataframe and dendrometer with missing data is used for predicting missing
+    values
+```
+
+All interpolation methods have bootstrapping included to make the predictions more robust.
+
+E. g. for proportional interpolation method: calculates proportional change, runs 500 iterations using the provided data. From that mean + 95% confidence interval is calculated for each missing data point
+
+Let's get back to the demo data and see how that looks like...
+
+We delete some data (200 values \~ ca. 33 h) and fill it with the different interpolation methods:
+
+```{r}
+dendro_D28_W <- dendro_j %>%
+  select("TIME", "D28_W")
+
+dendro_D28_W[1700:1900, 2] <- NA
+```
+
+#### dm.na.interpolation using cubic spline
+
+```{r}
+#| warning: false
+dendro_D28_W_spline <- dm.na.interpolation(dendro_D28_W, resolution = 10, 
+                                       fill = TRUE, method = "spline")
+
+ggplot() +
+  geom_line(data = dendro_D28_W_spline,
+            aes(x = TIME, y = D28_W, 
+            color = "Spline")) +
+    geom_line(data = dendro_j,
+            aes(x = TIME, y = D28_W, 
+            color = "Original")) +
+  scale_color_manual(values = c("Spline" = "blue",
+                                "Original" = "black")) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  xlim(as.POSIXct("2023-07-12"), as.POSIXct("2023-07-15")) +
+  ylim(8500, 9000) +
+  theme_bw()
+```
+
+#### dm.na.interpolation seasonal using ARIMA model
+
+```{r}
+#| warning: false
+dendro_D28_W_seasonal <- dm.na.interpolation(dendro_D28_W, resolution = 10, 
+                                       fill = TRUE, method = "seasonal")
+
+ggplot() +
+    geom_line(data = dendro_D28_W_seasonal,
+            aes(x = TIME, y = D28_W, 
+            color = "Seasonal")) +
+    geom_line(data = dendro_j,
+            aes(x = TIME, y = D28_W, 
+            color = "Original")) +
+  scale_color_manual(values = c("Seasonal" = "darkgreen", 
+                                "Original" = "black")) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  xlim(as.POSIXct("2023-07-12"), as.POSIXct("2023-07-15")) +
+  ylim(8500, 9000) +
+  theme_bw()
+```
+
+#### network.interpolation by using a linear model
+
+create reference dataframe with gapfree data from the dendrometers of the same treatment (W)
+
+```{r}
+#| warning: false
+dendro_W_ref <- dendro_j %>%
+  select("TIME", "D39_W", "D4_W",  "D15_W", "D25_W")
+
+dendro_D28_W_ni.lin <- network.interpolation(dendro_D28_W,
+                                              dendro_W_ref, 
+                                              niMethod = "linear")
+
+ggplot() +
+   geom_line(data = dendro_D28_W_ni.lin,
+            aes(x = TIME, y = D28_W, 
+            color = "NI Lin")) +
+    geom_line(data = dendro_j,
+            aes(x = TIME, y = D28_W, 
+            color = "Original")) +
+  scale_color_manual(values = c("NI Lin" = "goldenrod2", 
+                                "Original" = "black")) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  xlim(as.POSIXct("2023-07-12"), as.POSIXct("2023-07-15")) +
+  ylim(8500, 9000) +
+  theme_bw()
+```
+
+#### network.interpolation by using average proportional changes
+
+```{r}
+#| warning: false
+dendro_D28_W_ni.prop <- network.interpolation(dendro_D28_W,
+                                              dendro_W_ref, 
+                                              niMethod = "proportional")
+
+ggplot() +
+    geom_line(data = dendro_D28_W_ni.prop,
+            aes(x = TIME, y = D28_W, 
+            color = "NI Prop")) +
+    geom_line(data = dendro_j,
+            aes(x = TIME, y = D28_W, 
+            color = "Original")) +
+  scale_color_manual(values = c("NI Prop" = "red", 
+                                "Original" = "black")) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  xlim(as.POSIXct("2023-07-12"), as.POSIXct("2023-07-15")) +
+  ylim(8500, 9000) +
+  theme_bw()
+
+
+```
+
+Compare all interpolation methods
+
+```{r}
+#| warning: false
+ggplot() +
+  geom_line(data = dendro_D28_W_spline,
+            aes(x = TIME, y = D28_W, 
+            color = "Spline")) +
+    geom_line(data = dendro_D28_W_seasonal,
+            aes(x = TIME, y = D28_W, 
+            color = "Seasonal")) +
+    geom_line(data = dendro_D28_W_ni.prop,
+            aes(x = TIME, y = D28_W, 
+            color = "NI Prop")) +
+   geom_line(data = dendro_D28_W_ni.lin,
+            aes(x = TIME, y = D28_W, 
+            color = "NI Lin")) +
+    geom_line(data = dendro_j,
+            aes(x = TIME, y = D28_W, 
+            color = "Original")) +
+  scale_color_manual(values = c("Spline" = "blue", 
+                                "Seasonal" = "darkgreen", 
+                                "NI Prop" = "red", 
+                                "NI Lin" = "goldenrod2", 
+                                "Original" = "black")) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  xlim(as.POSIXct("2023-07-12"), as.POSIXct("2023-07-15")) +
+  ylim(8500, 9000) +
+  theme_bw()
+```
+
+Repeat for whole dataset, but divide into treatments.
+
+Check for missing data and subset dataframe accordingly.
+
+```{r}
+dendro_W <- dendro_j %>%
+  select(TIME, ends_with("_W"))
+
+sum(is.na(dendro_W))
+
+dendro_D <- dendro_j %>%
+  select(TIME, ends_with("_D"))
+
+sum(is.na(dendro_D))
+
+dendro_D_mis <- dendro_D[, c("TIME", 
+                             names(dendro_D)[colSums(is.na(dendro_D)) > 0])]
+head(dendro_D_mis)
+
+dendro_D_ref <- dendro_D[, colSums(is.na(dendro_D)) == 0]
+head(dendro_D_ref)
+ 
+
+```
+
+interpolate missing data
+
+```{r}
+dendro_D_i <- network.interpolation(dendro_D_mis,
+                                    dendro_D_ref, 
+                                    niMethod = "proportional")
+head(dendro_D_i)
+sum(is.na(dendro_D_i))
+```
+
+Check interpolation results
+
+```{r}
+df_list <- list(dendro_W, dendro_D_ref, dendro_D_i)
+
+dendro_i <- reduce(df_list, full_join, by = "TIME")
+
+dendro_i_long <- pivot_longer(dendro_i, 
+                            cols = 2:ncol(dendro_i),
+                            values_to = "TSD",
+                            names_to = "Tree.ID")
+
+dendro_i_long$Treatment <- sub(".*(W|D).*", "\\1", dendro_i_long$Tree.ID)
+
+ggplot(dendro_i_long) +
+  geom_line(aes(x = TIME, y = TSD, color = Tree.ID)) +
+  facet_grid(Treatment ~ .) +
+  ylab("Tree stem diameter [µm]") + xlab("Date") +
+  theme_bw()
+```
+
+Preprocessing is done :)
+
+### But what can we derive from the data?
+
+-\> Deeper understanding of growth responses or tree water relations
+
+**Several approaches:**
+
+-   Daily approach:
+
+    Calculates daily statistics like daily maximum, daily minimum, or amplitude
+
+-   Stem-cycle approach:
+
+    Divides data into 3 different phases:
+
+    -   Shrinkage: when the current reading is less than the previous reading
+
+    -   Expansion: when the current reading is greater than the previous reading
+
+    -   Increment: when current reading exceeds previous maxima
+
+-   Zero-growth approach:
+
+    Divides data into 2 different phases:
+
+    -   Tree water deficit (TWD): "reversible shrinkage and expansion of the stem when current reading is less than previous maxima"
+
+    -   Increment (GRO): "irreversible expansion of the stem when the current reading is higher than previous maxima
+
+#### Daily approach
+
+```{r}
+
+daily_data_D7_D <- daily.data(dendro_i, TreeNum = 8)
+
+head(daily_data_D7_D) 
+
+
+```
+
+#### Stem-cycle approach
+
+
+```{r}
+phase.sc_D7_D <- phase.sc(df = dendro_i, TreeNum = 8)
+
+head(phase.sc_D7_D[[1]],10)
+```
+
+```{r}
+head(phase.sc_D7_D[[2]],10)
+```
+
+```{r}
+# extract first date of dataframe and recalculate into DOY
+first_row <- head(dendro_i, 1)
+first_date <- as.Date(first_row$TIME)
+first_day_of_year <- as.numeric(format(first_date, "%j"))
+
+# extract last date of dataframe and recalculate into DOY
+last_row <- tail(dendro_i, 1)
+last_date <- as.Date(last_row$TIME)
+last_day_of_year <- as.numeric(format(last_date, "%j"))
+
+plot_SC_output(SC_output = phase.sc_D7_D,
+               DOY = c(first_day_of_year, last_day_of_year),
+                      Year = 2023)
+
+plot_SC_output(SC_output = phase.sc_D7_D,
+               DOY = c(first_day_of_year+7, last_day_of_year-40),
+                      Year = 2023)
+```
+
+#### Zero-growth approach
+
+```{r}
+phase.zg_D7_D <- phase.zg(df = dendro_i, TreeNum = 8) 
+
+head(phase.zg_D7_D[[1]],10)
+```
+
+```{r}
+head(phase.zg_D7_D[[2]],10)
+```
+
+```{r}
+
+plot_ZG_output(ZG_output = phase.zg_D7_D,
+               DOY = c(first_day_of_year, last_day_of_year),
+                      Year = 2023)
+
+```
+
+#### Growth-climate analysis
+
+#### **Locate TWD maxima** 
+
+Identifies all TWD phases, then selects TWD maxima within each TWD phase
+
+```{r}
+twd_max_D7_D <- twd.maxima(dendro_i, TreeNum = 8, smoothing = 5)
+head(twd_max_D7_D)
+
+
+```
+
+#### **Explore growth after extreme climate event**
+
+Read in some additional climate data containing air temperatures (but could also be other data like precipitation)
+
+```{r}
+#| warning: false
+clima <- read_csv("./Data/Demo_Climate_GH.csv", 
+                  col_select = -1)  
+clima$TIME <- as.POSIXct(clima$TIME, format="%Y-%m-%d %H:%M:%S") 
+clima <- clima %>%
+  filter(TIME >= as.POSIXct("2023-07-01 00:00:00", tz = "UTC") & 
+           TIME <= as.POSIXct("2023-08-31 23:50:00", tz = "UTC"))  
+
+head(clima)
+```
+
+
+```{r}
+# calculate daily climate data
+clima_daily <- clima %>%
+  group_by(TIME = as.Date(TIME)) %>%
+  summarize(max_temp = max(Tair))
+
+head(clima_daily)
+```
+
+Now, we want to explore how growth changes after an extreme climatic event with max. temperatures \>30°C for \>3 days (or during rainfree periods etc.)
+
+```{r}
+clim.twd(dendro_i, 
+         clima_daily, 
+         dailyValue = "max",
+         thresholdClim = ">30",
+         thresholdDays = ">3",
+         showPlot = TRUE)
+```
+
+#### Correlations with climate data
+
+Calculate a moving correlation after Spearman between tree stem diameter and daily max. temperature
+
+```{r}
+cor <- mov.cor.dm(dendro_i, clima_daily, TreeNum = 8, win_size = 18, cor_method = "pearson")
+cor$max_temp[30:40, ]
+```
+
+#### What did we learn?
+
+-   Overview about available packages for dendrometer data processing
+
+-   Introduction in dendRoAnalyst for:
+
+    -   Cleaning dendrometer data (jump-correction & gapfilling)
+
+    -   Derivation of growth or tree water status related parameters
+
+    -   Combining dendrometer data with environmental data
