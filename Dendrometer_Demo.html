@@ -118,50 +118,51 @@ div.csl-indent {
 
 <section id="how-do-dendrometer-data-look-like" class="level2">
 <h2 class="anchored" data-anchor-id="how-do-dendrometer-data-look-like">How do dendrometer data look like?</h2>
-<p>Let’s see and have a look at the demo data…</p>
+<p>Let’s see…</p>
+<p>Load required packages</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>dendro <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/Demo_Dendrometer_GH.csv"</span>, </span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">col_select =</span> <span class="sc">-</span><span class="dv">1</span>)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>dendro<span class="sc">$</span>TIMESTAMP <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(dendro<span class="sc">$</span>TIMESTAMP, </span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                               <span class="at">format=</span><span class="st">"%Y-%m-%d %H:%M:%S"</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dendro)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 11
-  TIMESTAMP           D19_D D28_W D31_D D33_D D39_W  D4_W D43_D  D7_D D15_W
-  &lt;dttm&gt;              &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1 2023-07-01 00:00:00 8120. 8139. 7208. 6655. 6930. 7600. 7395. 7796. 8599.
-2 2023-07-01 00:10:00 8122. 8140. 7209. 6657. 6932. 7601. 7396. 7797. 8600.
-3 2023-07-01 00:20:00 8124. 8142. 7211. 6657. 6934. 7603. 7397. 7799. 8602.
-4 2023-07-01 00:30:00 8125. 8143. 7213. 6660. 6936. 7604. 7399. 7801. 8605.
-5 2023-07-01 00:40:00 8128. 8145. 7214. 6661. 6937. 7604. 7400. 7802. 8607.
-6 2023-07-01 00:50:00 8130. 8145. 7216. 6662. 6938. 7605. 7401. 7804. 8608.
-# ℹ 1 more variable: D25_W &lt;dbl&gt;</code></pre>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dendRoAnalyst)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<p>… and visualize them</p>
+<p>Read in demo data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dendro_long <span class="ot">&lt;-</span> <span class="fu">pivot_longer</span>(dendro, </span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">cols =</span> <span class="dv">2</span><span class="sc">:</span><span class="fu">ncol</span>(dendro),</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">values_to =</span> <span class="st">"TSD"</span>,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">names_to =</span> <span class="st">"Tree.ID"</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>dendro_long<span class="sc">$</span>Treatment <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">".*(W|D).*"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, dendro_long<span class="sc">$</span>Tree.ID)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dendro_long) <span class="sc">+</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> TIMESTAMP, <span class="at">y =</span> TSD, <span class="at">color =</span> Tree.ID)) <span class="sc">+</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Treatment <span class="sc">~</span> .) <span class="sc">+</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dendro <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/Demo_Dendrometer_GH.csv"</span>, </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">col_select =</span> <span class="sc">-</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>New names:
+Rows: 8928 Columns: 11
+── Column specification
+──────────────────────────────────────────────────────── Delimiter: "," dbl
+(10): D19_D, D28_W, D31_D, D33_D, D39_W, D4_W, D43_D, D7_D, D15_W, D25_W dttm
+(1): TIMESTAMP
+ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+Specify the column types or set `show_col_types = FALSE` to quiet this message.
+• `` -&gt; `...1`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dendro<span class="sc">$</span>TIMESTAMP <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(dendro<span class="sc">$</span>TIMESTAMP, </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">format=</span><span class="st">"%Y-%m-%d %H:%M:%S"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>… and have a look at the demo data</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dendro_long <span class="ot">&lt;-</span> <span class="fu">pivot_longer</span>(dendro, </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">cols =</span> <span class="dv">2</span><span class="sc">:</span><span class="fu">ncol</span>(dendro),</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">values_to =</span> <span class="st">"TSD"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">names_to =</span> <span class="st">"Tree.ID"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>dendro_long<span class="sc">$</span>Treatment <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">".*(W|D).*"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, dendro_long<span class="sc">$</span>Tree.ID)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dendro_long) <span class="sc">+</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> TIMESTAMP, <span class="at">y =</span> TSD, <span class="at">color =</span> Tree.ID)) <span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Treatment <span class="sc">~</span> .) <span class="sc">+</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -187,19 +188,16 @@ div.csl-indent {
 <li>detrending (dm.detrend, mean.detrended.dm)</li>
 <li>calculating climate-growth relationships (mov.cor.dm)</li>
 </ul>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dendRoAnalyst)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>Let’s inspect one dendrometer closer</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dendro_D4W <span class="ot">&lt;-</span> dendro <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(TIMESTAMP, D4_W)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> dendro_D4W,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> TIMESTAMP, <span class="at">y =</span> D4_W)) <span class="sc">+</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dendro_D4W <span class="ot">&lt;-</span> dendro <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(TIMESTAMP, D4_W)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> dendro_D4W,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> TIMESTAMP, <span class="at">y =</span> D4_W)) <span class="sc">+</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -212,7 +210,7 @@ div.csl-indent {
 <h3 class="anchored" data-anchor-id="how-can-we-get-rid-of-this-jump">How can we get rid of this jump?</h3>
 <p>-&gt; use function <strong>jump.locator</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dendro_D4W_j <span class="ot">&lt;-</span> <span class="fu">jump.locator</span>(dendro_D4W, <span class="at">v =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dendro_D4W_j <span class="ot">&lt;-</span> <span class="fu">jump.locator</span>(dendro_D4W, <span class="at">v =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Jump information in  D4_W"
 # A tibble: 2 × 3
@@ -221,13 +219,13 @@ div.csl-indent {
 1  6962 2023-08-18 08:10:00      -386.
 2  6963 2023-08-18 08:20:00     -3469.</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> dendro_D4W_j,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> TIME, <span class="at">y =</span> D4_W), <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> dendro_D4W,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> TIMESTAMP, <span class="at">y =</span> D4_W)) <span class="sc">+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> dendro_D4W_j,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> TIME, <span class="at">y =</span> D4_W), <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> dendro_D4W,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> TIMESTAMP, <span class="at">y =</span> D4_W)) <span class="sc">+</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -238,7 +236,7 @@ div.csl-indent {
 </div>
 <p>Repeat for all dendrometers</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dendro_j <span class="ot">&lt;-</span> <span class="fu">jump.locator</span>(dendro, <span class="at">v =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dendro_j <span class="ot">&lt;-</span> <span class="fu">jump.locator</span>(dendro, <span class="at">v =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "There is no jump in  D19_D"
 [1] "Jump information in  D28_W"
@@ -288,18 +286,18 @@ div.csl-indent {
 2  6963 2023-08-18 08:20:00     -1346.
 3  6973 2023-08-18 10:00:00     -3424.</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dendro_j_long <span class="ot">&lt;-</span> <span class="fu">pivot_longer</span>(dendro_j, </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">cols =</span> <span class="dv">2</span><span class="sc">:</span><span class="fu">ncol</span>(dendro_j),</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">values_to =</span> <span class="st">"TSD"</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">names_to =</span> <span class="st">"Tree.ID"</span>)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>dendro_j_long<span class="sc">$</span>Treatment <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">".*(W|D).*"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, dendro_j_long<span class="sc">$</span>Tree.ID)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dendro_j_long) <span class="sc">+</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> TIME, <span class="at">y =</span> TSD, <span class="at">color =</span> Tree.ID)) <span class="sc">+</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Treatment <span class="sc">~</span> .) <span class="sc">+</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>dendro_j_long <span class="ot">&lt;-</span> <span class="fu">pivot_longer</span>(dendro_j, </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">cols =</span> <span class="dv">2</span><span class="sc">:</span><span class="fu">ncol</span>(dendro_j),</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">values_to =</span> <span class="st">"TSD"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">names_to =</span> <span class="st">"Tree.ID"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>dendro_j_long<span class="sc">$</span>Treatment <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">".*(W|D).*"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, dendro_j_long<span class="sc">$</span>Tree.ID)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dendro_j_long) <span class="sc">+</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> TIME, <span class="at">y =</span> TSD, <span class="at">color =</span> Tree.ID)) <span class="sc">+</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Treatment <span class="sc">~</span> .) <span class="sc">+</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Tree stem diameter [µm]"</span>) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">"Date"</span>) <span class="sc">+</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -313,39 +311,27 @@ div.csl-indent {
 <h3 class="anchored" data-anchor-id="lets-fill-the-gaps">Let’s <strong>fill the gaps</strong>…</h3>
 <p>Several options are available in dendRoAnalyst:</p>
 <ol type="1">
-<li>dm.na.interpolation (= former spline.interpolation):</li>
+<li>dm.na.interpolation:</li>
 </ol>
-<pre><code>Uncertainty increases with length of data gap - recommended for gaps of max. 24h</code></pre>
-<pre><code>-   cubic spline: 
-    Gapfilling via cubic spline interpolation
-    
--   seasonal:
-    An ARIMA model is used to detect the daily pattern for 3 weeks 
-    (week of gap + 1 week earlier and later) and interpolates missing data</code></pre>
+<pre><code>-   seasonal
+
+-   cubic spline</code></pre>
 <ol start="2" type="1">
-<li><p>network interpolation:</p>
-<p>Includes stem diameter variations from other dendrometers (= reference dataframe) for gapfilling</p></li>
+<li>network interpolation:</li>
 </ol>
 <pre><code>-   niMethod = "linear"
-    Missing value is calculated by linear model between previous data points of
-    reference dataframe and dendrometer with missing values 
 
--   niMethod = "proportional"
-    Average proportional change between previous datapoints in reference 
-    dataframe and dendrometer with missing data is used for predicting missing
-    values</code></pre>
-<p>All interpolation methods have bootstrapping included to make the predictions more robust.</p>
-<p>E. g. for proportional interpolation method: calculates proportional change, runs 500 iterations using the provided data. From that mean + 95% confidence interval is calculated for each missing data point</p>
-<p>Let’s get back to the demo data and see how that looks like…</p>
-<p>We delete some data (200 values ~ ca. 33 h) and fill it with the different interpolation methods:</p>
+-   niMethod = "proportional"</code></pre>
+<p>Let’s see how that looks like…</p>
+<p>We delete some data and fill it with the different methods:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>dendro_D28_W <span class="ot">&lt;-</span> dendro_j <span class="sc">%&gt;%</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"TIME"</span>, <span class="st">"D28_W"</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>dendro_D28_W[<span class="dv">1700</span><span class="sc">:</span><span class="dv">1900</span>, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="dm.na.interpolation-using-cubic-spline" class="level4">
-<h4 class="anchored" data-anchor-id="dm.na.interpolation-using-cubic-spline">dm.na.interpolation using cubic spline</h4>
+<section id="dm.na.interpolation-cubic-spline" class="level4">
+<h4 class="anchored" data-anchor-id="dm.na.interpolation-cubic-spline">dm.na.interpolation cubic spline</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>dendro_D28_W_spline <span class="ot">&lt;-</span> <span class="fu">dm.na.interpolation</span>(dendro_D28_W, <span class="at">resolution =</span> <span class="dv">10</span>, </span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">fill =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">"spline"</span>)</span>
@@ -372,8 +358,8 @@ div.csl-indent {
 </div>
 </div>
 </section>
-<section id="dm.na.interpolation-seasonal-using-arima-model" class="level4">
-<h4 class="anchored" data-anchor-id="dm.na.interpolation-seasonal-using-arima-model">dm.na.interpolation seasonal using ARIMA model</h4>
+<section id="dm.na.interpolation-seasonal" class="level4">
+<h4 class="anchored" data-anchor-id="dm.na.interpolation-seasonal">dm.na.interpolation seasonal</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>dendro_D28_W_seasonal <span class="ot">&lt;-</span> <span class="fu">dm.na.interpolation</span>(dendro_D28_W, <span class="at">resolution =</span> <span class="dv">10</span>, </span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">fill =</span> <span class="cn">TRUE</span>, <span class="at">method =</span> <span class="st">"seasonal"</span>)</span>
@@ -400,8 +386,8 @@ div.csl-indent {
 </div>
 </div>
 </section>
-<section id="network.interpolation-by-using-a-linear-model" class="level4">
-<h4 class="anchored" data-anchor-id="network.interpolation-by-using-a-linear-model">network.interpolation by using a linear model</h4>
+<section id="network.interpolation-linear" class="level4">
+<h4 class="anchored" data-anchor-id="network.interpolation-linear">network.interpolation linear</h4>
 <p>create reference dataframe with gapfree data from the dendrometers of the same treatment (W)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>dendro_W_ref <span class="ot">&lt;-</span> dendro_j <span class="sc">%&gt;%</span></span>
@@ -433,8 +419,8 @@ div.csl-indent {
 </div>
 </div>
 </section>
-<section id="network.interpolation-by-using-average-proportional-changes" class="level4">
-<h4 class="anchored" data-anchor-id="network.interpolation-by-using-average-proportional-changes">network.interpolation by using average proportional changes</h4>
+<section id="network.interpolation-proportional" class="level4">
+<h4 class="anchored" data-anchor-id="network.interpolation-proportional">network.interpolation proportional</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>dendro_D28_W_ni.prop <span class="ot">&lt;-</span> <span class="fu">network.interpolation</span>(dendro_D28_W,</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                                              dendro_W_ref, </span>
@@ -594,7 +580,7 @@ div.csl-indent {
 </section>
 <section id="but-what-can-we-derive-from-the-data" class="level3">
 <h3 class="anchored" data-anchor-id="but-what-can-we-derive-from-the-data">But what can we derive from the data?</h3>
-<p>-&gt; Deeper understanding of growth responses or tree water relations</p>
+<p>-&gt; Deeper understanding in growth responses or tree water relations</p>
 <p><strong>Several approaches:</strong></p>
 <ul>
 <li><p>Daily approach:</p>
@@ -607,10 +593,10 @@ div.csl-indent {
 <li><p>Increment: when current reading exceeds previous maxima</p></li>
 </ul></li>
 <li><p>Zero-growth approach:</p>
-<p>Divides data into 2 different phases:</p>
+<p>Divides data into 2 different phases <span class="citation" data-cites="aryal2020">(<a href="#ref-aryal2020" role="doc-biblioref">Aryal et al. 2020</a>)</span>:</p>
 <ul>
 <li><p>Tree water deficit (TWD): “reversible shrinkage and expansion of the stem when current reading is less than previous maxima”</p></li>
-<li><p>Increment (GRO): “irreversible expansion of the stem when the current reading is higher than previous maxima</p></li>
+<li><p>Increment (GRO): “irreversible expansion of the stem when the current reading is higher than previous maxima”</p></li>
 </ul></li>
 </ul>
 <section id="daily-approach" class="level4">
@@ -630,12 +616,7 @@ div.csl-indent {
 5 2023-07-05 7949. 16:10:00 8025. 23:50:00 7986.  7991.      76.0 "*"    
 6 2023-07-06 7890. 12:10:00 8042. 05:20:00 7976.  7996.     152.  ""     </code></pre>
 </div>
-</div>
-</section>
-<section id="stem-cycle-approach" class="level4">
-<h4 class="anchored" data-anchor-id="stem-cycle-approach">Stem-cycle approach</h4>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>phase.sc_D7_D <span class="ot">&lt;-</span> <span class="fu">phase.sc</span>(<span class="at">df =</span> dendro_i, <span class="at">TreeNum =</span> <span class="dv">8</span>)</span>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>phase.sc_D7_D <span class="ot">&lt;-</span> <span class="fu">phase.sc</span>(<span class="at">df =</span> dendro_i, <span class="at">TreeNum =</span> <span class="dv">8</span>) </span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(phase.sc_D7_D[[<span class="dv">1</span>]],<span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -673,6 +654,9 @@ div.csl-indent {
 10 2023-07-01 01:30:00 7810.      3</code></pre>
 </div>
 </div>
+</section>
+<section id="stem-cycle-approach" class="level4">
+<h4 class="anchored" data-anchor-id="stem-cycle-approach">Stem-cycle approach</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># extract first date of dataframe and recalculate into DOY</span></span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>first_row <span class="ot">&lt;-</span> <span class="fu">head</span>(dendro_i, <span class="dv">1</span>)</span>
@@ -690,17 +674,7 @@ div.csl-indent {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_SC_output</span>(<span class="at">SC_output =</span> phase.sc_D7_D,</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">DOY =</span> <span class="fu">c</span>(first_day_of_year<span class="sc">+</span><span class="dv">7</span>, last_day_of_year<span class="dv">-40</span>),</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">Year =</span> <span class="dv">2023</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-19-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -709,9 +683,9 @@ div.csl-indent {
 <section id="zero-growth-approach" class="level4">
 <h4 class="anchored" data-anchor-id="zero-growth-approach">Zero-growth approach</h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>phase.zg_D7_D <span class="ot">&lt;-</span> <span class="fu">phase.zg</span>(<span class="at">df =</span> dendro_i, <span class="at">TreeNum =</span> <span class="dv">8</span>) </span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(phase.zg_D7_D[[<span class="dv">1</span>]],<span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>phase.zg_D7_D <span class="ot">&lt;-</span> <span class="fu">phase.zg</span>(<span class="at">df =</span> dendro_i, <span class="at">TreeNum =</span> <span class="dv">8</span>) </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(phase.zg_D7_D[[<span class="dv">1</span>]],<span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 12
    Phases Start               End                 Duration_h Magnitude  rate
@@ -731,7 +705,7 @@ div.csl-indent {
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(phase.zg_D7_D[[<span class="dv">2</span>]],<span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(phase.zg_D7_D[[<span class="dv">2</span>]],<span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 5
    TIME                   dm Phases   TWD   GRO
@@ -749,27 +723,25 @@ div.csl-indent {
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ZG_output</span>(<span class="at">ZG_output =</span> phase.zg_D7_D,</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">DOY =</span> <span class="fu">c</span>(first_day_of_year, last_day_of_year),</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">Year =</span> <span class="dv">2023</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ZG_output</span>(<span class="at">ZG_output =</span> phase.zg_D7_D,</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">DOY =</span> <span class="fu">c</span>(first_day_of_year, last_day_of_year),</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">Year =</span> <span class="dv">2023</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="growth-climate-analysis" class="level4">
-<h4 class="anchored" data-anchor-id="growth-climate-analysis">Growth-climate analysis</h4>
-</section>
-<section id="locate-twd-maxima" class="level4">
-<h4 class="anchored" data-anchor-id="locate-twd-maxima"><strong>Locate TWD maxima</strong></h4>
-<p>Identifies all TWD phases, then selects TWD maxima within each TWD phase</p>
+<section id="explore-growth-during-extreme-climate-extremes" class="level4">
+<h4 class="anchored" data-anchor-id="explore-growth-during-extreme-climate-extremes">Explore growth during extreme climate extremes</h4>
+<p><strong>Locate maxima of TWD periods</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>twd_max_D7_D <span class="ot">&lt;-</span> <span class="fu">twd.maxima</span>(dendro_i, <span class="at">TreeNum =</span> <span class="dv">8</span>, <span class="at">smoothing =</span> <span class="dv">5</span>)</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(twd_max_D7_D)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Locating the maxima of TWD periods</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>twd_max_D7_D <span class="ot">&lt;-</span> <span class="fu">twd.maxima</span>(dendro_i, <span class="at">TreeNum =</span> <span class="dv">8</span>, <span class="at">smoothing =</span> <span class="dv">5</span>)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(twd_max_D7_D)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 7
   Start.time          End.time            TIME                Phases   TWD
@@ -783,62 +755,42 @@ div.csl-indent {
 # ℹ 2 more variables: Duration_from_start &lt;drtn&gt;, twd.number &lt;int&gt;</code></pre>
 </div>
 </div>
-</section>
-<section id="explore-growth-after-extreme-climate-event" class="level4">
-<h4 class="anchored" data-anchor-id="explore-growth-after-extreme-climate-event"><strong>Explore growth after extreme climate event</strong></h4>
-<p>Read in some additional climate data containing air temperatures (but could also be other data like precipitation)</p>
+<p>read in some additional climate data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>clima <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/Demo_Climate_GH.csv"</span>, </span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">col_select =</span> <span class="sc">-</span><span class="dv">1</span>)  </span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>clima<span class="sc">$</span>TIME <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(clima<span class="sc">$</span>TIME, <span class="at">format=</span><span class="st">"%Y-%m-%d %H:%M:%S"</span>) </span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>clima <span class="ot">&lt;-</span> clima <span class="sc">%&gt;%</span></span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(TIME <span class="sc">&gt;=</span> <span class="fu">as.POSIXct</span>(<span class="st">"2023-07-01 00:00:00"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>) <span class="sc">&amp;</span> </span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>           TIME <span class="sc">&lt;=</span> <span class="fu">as.POSIXct</span>(<span class="st">"2023-08-31 23:50:00"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>))  </span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(clima)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 2
-  TIME                 Tair
-  &lt;dttm&gt;              &lt;dbl&gt;
-1 2023-07-01 00:00:00  18.4
-2 2023-07-01 00:10:00  18.2
-3 2023-07-01 00:20:00  18.2
-4 2023-07-01 00:30:00  18.0
-5 2023-07-01 00:40:00  18.1
-6 2023-07-01 00:50:00  17.9</code></pre>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>clima <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/Demo_Climate_GH.csv"</span>, </span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">col_select =</span> <span class="sc">-</span><span class="dv">1</span>)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>New names:
+Rows: 15053 Columns: 2
+── Column specification
+──────────────────────────────────────────────────────── Delimiter: "," dbl
+(1): Tair dttm (1): TIME
+ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+Specify the column types or set `show_col_types = FALSE` to quiet this message.
+• `` -&gt; `...1`</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>clima<span class="sc">$</span>TIME <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(clima<span class="sc">$</span>TIME, <span class="at">format=</span><span class="st">"%Y-%m-%d %H:%M:%S"</span>) </span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>clima <span class="ot">&lt;-</span> clima <span class="sc">%&gt;%</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(TIME <span class="sc">&gt;=</span> <span class="fu">as.POSIXct</span>(<span class="st">"2023-07-01 00:00:00"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>) <span class="sc">&amp;</span> </span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>           TIME <span class="sc">&lt;=</span> <span class="fu">as.POSIXct</span>(<span class="st">"2023-08-31 23:50:00"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>))  </span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate daily climate data</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>clima_daily <span class="ot">&lt;-</span> clima <span class="sc">%&gt;%</span></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">TIME =</span> <span class="fu">as.Date</span>(TIME)) <span class="sc">%&gt;%</span></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">max_temp =</span> <span class="fu">max</span>(Tair))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p><strong>Explore growth after extreme climate event</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate daily climate data</span></span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>clima_daily <span class="ot">&lt;-</span> clima <span class="sc">%&gt;%</span></span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">TIME =</span> <span class="fu">as.Date</span>(TIME)) <span class="sc">%&gt;%</span></span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">max_temp =</span> <span class="fu">max</span>(Tair))</span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(clima_daily)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 2
-  TIME       max_temp
-  &lt;date&gt;        &lt;dbl&gt;
-1 2023-07-01     27.1
-2 2023-07-02     27.0
-3 2023-07-03     26.6
-4 2023-07-04     29.2
-5 2023-07-05     24.9
-6 2023-07-06     29.2</code></pre>
-</div>
-</div>
-<p>Now, we want to explore how growth changes after an extreme climatic event with max. temperatures &gt;30°C for &gt;3 days (or during rainfree periods etc.)</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clim.twd</span>(dendro_i, </span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>         clima_daily, </span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">dailyValue =</span> <span class="st">"max"</span>,</span>
-<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">thresholdClim =</span> <span class="st">"&gt;30"</span>,</span>
-<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">thresholdDays =</span> <span class="st">"&gt;3"</span>,</span>
-<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">showPlot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clim.twd</span>(dendro_i, </span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>         clima_daily, </span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">dailyValue =</span> <span class="st">"max"</span>,</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">thresholdClim =</span> <span class="st">"&gt;30"</span>,</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">thresholdDays =</span> <span class="st">"&gt;3"</span>,</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">showPlot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -850,7 +802,7 @@ div.csl-indent {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-26-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Dendrometer_Demo_files/figure-html/unnamed-chunk-24-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -874,39 +826,29 @@ div.csl-indent {
 </section>
 <section id="correlations-with-climate-data" class="level4">
 <h4 class="anchored" data-anchor-id="correlations-with-climate-data">Correlations with climate data</h4>
-<p>Calculate a moving correlation after Spearman between tree stem diameter and daily max. temperature</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>cor <span class="ot">&lt;-</span> <span class="fu">mov.cor.dm</span>(dendro_i, clima_daily, <span class="at">TreeNum =</span> <span class="dv">8</span>, <span class="at">win_size =</span> <span class="dv">18</span>, <span class="at">cor_method =</span> <span class="st">"pearson"</span>)</span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>cor<span class="sc">$</span>max_temp[<span class="dv">30</span><span class="sc">:</span><span class="dv">40</span>, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mov.cor.dm</span>(dendro_i, clima_daily, <span class="at">TreeNum =</span> <span class="dv">8</span>, <span class="at">win_size =</span> <span class="dv">18</span>, <span class="at">cor_method =</span> <span class="st">"pearson"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 11 × 3
-   TIME          corr    p_val
-   &lt;date&gt;       &lt;dbl&gt;    &lt;dbl&gt;
- 1 2023-07-30  0.695  0.000965
- 2 2023-07-31  0.653  0.00244 
- 3 2023-08-01  0.439  0.0601  
- 4 2023-08-02  0.156  0.523   
- 5 2023-08-03 -0.0625 0.799   
- 6 2023-08-04 -0.119  0.626   
- 7 2023-08-05 -0.186  0.445   
- 8 2023-08-06 -0.284  0.240   
- 9 2023-08-07 -0.421  0.0729  
-10 2023-08-08 -0.527  0.0203  
-11 2023-08-09 -0.518  0.0232  </code></pre>
+<pre><code>$max_temp
+# A tibble: 62 × 3
+   TIME         corr    p_val
+   &lt;date&gt;      &lt;dbl&gt;    &lt;dbl&gt;
+ 1 2023-07-01 NA     NA      
+ 2 2023-07-02 NA     NA      
+ 3 2023-07-03 NA     NA      
+ 4 2023-07-04 NA     NA      
+ 5 2023-07-05 NA     NA      
+ 6 2023-07-06 NA     NA      
+ 7 2023-07-07 NA     NA      
+ 8 2023-07-08 NA     NA      
+ 9 2023-07-09 NA     NA      
+10 2023-07-10  0.621  0.00451
+# ℹ 52 more rows
+
+attr(,"class")
+[1] "mov.cor"</code></pre>
 </div>
 </div>
-</section>
-<section id="what-did-we-learn" class="level4">
-<h4 class="anchored" data-anchor-id="what-did-we-learn">What did we learn?</h4>
-<ul>
-<li><p>Overview about available packages for dendrometer data processing</p></li>
-<li><p>Introduction in dendRoAnalyst for:</p>
-<ul>
-<li><p>Cleaning dendrometer data (jump-correction &amp; gapfilling)</p></li>
-<li><p>Derivation of growth or tree water status related parameters</p></li>
-<li><p>Combining dendrometer data with environmental data</p></li>
-</ul></li>
-</ul>
 
 </section>
 </section>

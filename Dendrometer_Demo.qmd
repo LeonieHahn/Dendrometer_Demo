@@ -16,6 +16,7 @@ library(readr)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(dendRoAnalyst)
 ```
 
 Read in demo data
@@ -67,10 +68,6 @@ Additional new functions, e. g.:
 
 -   detrending (dm.detrend, mean.detrended.dm)
 -   calculating climate-growth relationships (mov.cor.dm)
-
-```{r}
-library(dendRoAnalyst)
-```
 
 Let's inspect one dendrometer closer
 
@@ -347,11 +344,27 @@ Preprocessing is done :)
 
 **Several approaches:**
 
-1.  Daily approach
+-   Daily approach:
 
-2.  Stem-cycle approach
+    Calculates daily statistics like daily maximum, daily minimum, or amplitude
 
-3.  Zero-growth approach
+-   Stem-cycle approach:
+
+    Divides data into 3 different phases:
+
+    -   Shrinkage: when the current reading is less than the previous reading
+
+    -   Expansion: when the current reading is greater than the previous reading
+
+    -   Increment: when current reading exceeds previous maxima
+
+-   Zero-growth approach:
+
+    Divides data into 2 different phases [@aryal2020]:
+
+    -   Tree water deficit (TWD): “reversible shrinkage and expansion of the stem when current reading is less than previous maxima”
+
+    -   Increment (GRO): “irreversible expansion of the stem when the current reading is higher than previous maxima"
 
 #### Daily approach
 
